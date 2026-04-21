@@ -1,68 +1,146 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Let's FioHub</title>
     <style>
-        body { font-family: Arial; background: #0f0f0f; color: white; margin: 0; padding: 20px; }
-        .video { background: #1a1a1a; padding: 15px; margin: 10px; border-radius: 10px; cursor: pointer; }
-        button { background: #3ea6ff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-        input { padding: 10px; margin: 5px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f0f0f;
+            color: white;
+        }
+        .container {
+            display: flex;
+        }
+        .sidebar {
+            width: 240px;
+            background: #202020;
+            height: 100vh;
+            position: fixed;
+            padding: 20px;
+        }
+        .sidebar h2 {
+            color: #ff0000;
+            margin-bottom: 20px;
+        }
+        .sidebar ul {
+            list-style: none;
+        }
+        .sidebar li {
+            padding: 12px;
+            margin: 5px 0;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .sidebar li:hover {
+            background: #3a3a3a;
+        }
+        .main {
+            margin-left: 260px;
+            padding: 20px;
+            width: calc(100% - 260px);
+        }
+        .tabs {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #3a3a3a;
+            padding-bottom: 10px;
+        }
+        .tab {
+            cursor: pointer;
+            padding: 8px 16px;
+        }
+        .tab.active {
+            color: #3ea6ff;
+            border-bottom: 2px solid #3ea6ff;
+        }
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .video-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .thumbnail {
+            background: #2a2a2a;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        .video-info {
+            padding: 12px;
+        }
+        .video-title {
+            font-weight: bold;
+        }
+        .video-channel {
+            color: #aaa;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .video-stats {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>🎬 Let's FioHub</h1>
-    <button onclick="showAdd()">➕ Добавить видео</button>
-    <div id="addForm" style="display:none; margin:20px 0">
-        <input type="text" id="title" placeholder="Название">
-        <input type="url" id="url" placeholder="Ссылка">
-        <button onclick="addVideo()">Сохранить</button>
+    <div class="container">
+        <div class="sidebar">
+            <h2>🎬 Let's FioHub</h2>
+            <ul>
+                <li>🏠 Главная</li>
+                <li>⚡ Quick</li>
+                <li>📺 Мой канал</li>
+                <li>🔔 Подписки</li>
+                <li>📜 История</li>
+                <li>👥 Мои подписчики</li>
+            </ul>
+        </div>
+        <div class="main">
+            <div class="tabs">
+                <div class="tab active">Все видео</div>
+                <div class="tab">Тренды</div>
+                <div class="tab">Рекомендации</div>
+            </div>
+            <div id="videoGrid" class="video-grid"></div>
+        </div>
     </div>
-    <div id="videos"></div>
 
     <script>
-        let videos = JSON.parse(localStorage.getItem('videos') || '[]');
-        if(videos.length === 0) {
-            videos = [
-                {id:1, title:"Тестовое видео", channel:"Канал", views:100, url:"https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"}
-            ];
-            localStorage.setItem('videos', JSON.stringify(videos));
-        }
-        
-        function showVideos() {
-            const div = document.getElementById('videos');
-            div.innerHTML = videos.map(v => `
-                <div class="video" onclick="watch('${v.id}')">
-                    <b>${v.title}</b><br>
-                    ${v.channel} • ${v.views} просмотров
-                </div>
-            `).join('');
-        }
-        
-        function watch(id) {
-            const v = videos.find(v => v.id == id);
-            localStorage.setItem('current', JSON.stringify(v));
-            location.href = 'watch.html';
-        }
-        
-        function showAdd() {
-            const f = document.getElementById('addForm');
-            f.style.display = f.style.display === 'none' ? 'block' : 'none';
-        }
-        
-        function addVideo() {
-            const title = document.getElementById('title').value;
-            const url = document.getElementById('url').value;
-            if(title && url) {
-                videos.push({id: Date.now(), title, channel:"Мой канал", views:0, url});
-                localStorage.setItem('videos', JSON.stringify(videos));
-                showVideos();
-                showAdd();
-                document.getElementById('title').value = '';
-                document.getElementById('url').value = '';
+        // Точные данные со второго скриншота
+        const videos = [
+            {
+                title: "Аudi",
+                channel: "Ivan Ozilov",
+                stats: "19 пиктограмм"
             }
-        }
+        ];
         
-        showVideos();
+        const grid = document.getElementById('videoGrid');
+        grid.innerHTML = videos.map(video => `
+            <div class="video-card">
+                <div class="thumbnail">🎬</div>
+                <div class="video-info">
+                    <div class="video-title">${video.title}</div>
+                    <div class="video-channel">${video.channel}</div>
+                    <div class="video-stats">${video.stats}</div>
+                </div>
+            </div>
+        `).join('');
     </script>
 </body>
 </html>
