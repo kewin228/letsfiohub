@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Просмотр</title>
+    <style>
+        body { font-family: Arial; background: #0f0f0f; color: white; margin: 0; padding: 20px; }
+        video { width: 100%; max-width: 800px; }
+        button { background: #3ea6ff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <button onclick="location.href='index.html'">← Назад</button>
+    <div id="player"></div>
+    <script>
+        const v = JSON.parse(localStorage.getItem('current'));
+        if(v) {
+            document.getElementById('player').innerHTML = `
+                <h1>${v.title}</h1>
+                <video controls autoplay src="${v.url}"></video>
+                <p>👁️ ${v.views} просмотров</p>
+            `;
+        } else {
+            document.getElementById('player').innerHTML = '<p>Видео не найдено</p>';
+        }
+    </script>
+</body>
+</html>

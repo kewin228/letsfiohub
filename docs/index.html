@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Let's FioHub</title>
+    <style>
+        body { font-family: Arial; background: #0f0f0f; color: white; margin: 0; padding: 20px; }
+        .video { background: #1a1a1a; padding: 15px; margin: 10px; border-radius: 10px; cursor: pointer; }
+        button { background: #3ea6ff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        input { padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🎬 Let's FioHub</h1>
+    <button onclick="showAdd()">➕ Добавить видео</button>
+    <div id="addForm" style="display:none; margin:20px 0">
+        <input type="text" id="title" placeholder="Название">
+        <input type="url" id="url" placeholder="Ссылка">
+        <button onclick="addVideo()">Сохранить</button>
+    </div>
+    <div id="videos"></div>
+
+    <script>
+        let videos = JSON.parse(localStorage.getItem('videos') || '[]');
+        if(videos.length === 0) {
+            videos = [
+                {id:1, title:"Тестовое видео", channel:"Канал", views:100, url:"https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"}
+            ];
+            localStorage.setItem('videos', JSON.stringify(videos));
+        }
+        
+        function showVideos() {
+            const div = document.getElementById('videos');
+            div.innerHTML = videos.map(v => `
+                <div class="video" onclick="watch('${v.id}')">
+                    <b>${v.title}</b><br>
+                    ${v.channel} • ${v.views} просмотров
+                </div>
+            `).join('');
+        }
+        
+        function watch(id) {
+            const v = videos.find(v => v.id == id);
+            localStorage.setItem('current', JSON.stringify(v));
+            location.href = 'watch.html';
+        }
+        
+        function showAdd() {
+            const f = document.getElementById('addForm');
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function addVideo() {
+            const title = document.getElementById('title').value;
+            const url = document.getElementById('url').value;
+            if(title && url) {
+                videos.push({id: Date.now(), title, channel:"Мой канал", views:0, url});
+                localStorage.setItem('videos', JSON.stringify(videos));
+                showVideos();
+                showAdd();
+                document.getElementById('title').value = '';
+                document.getElementById('url').value = '';
+            }
+        }
+        
+        showVideos();
+    </script>
+</body>
+</html>
