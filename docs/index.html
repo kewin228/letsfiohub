@@ -4,11 +4,7 @@
     <meta charset="UTF-8">
     <title>Let's FioHub</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: Arial, sans-serif;
             background: #0f0f0f;
@@ -95,6 +91,59 @@
             color: #888;
             margin-top: 5px;
         }
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #3ea6ff;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.open {
+            display: flex;
+        }
+        .modal-content {
+            background: #1a1a1a;
+            padding: 24px;
+            border-radius: 12px;
+            width: 400px;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            color: white;
+            border-radius: 5px;
+        }
+        .modal-content button {
+            background: #3ea6ff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -119,28 +168,98 @@
             <div id="videoGrid" class="video-grid"></div>
         </div>
     </div>
+    <div class="fab" onclick="openModal()">➕</div>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3>➕ Добавить видео</h3>
+            <input type="text" id="videoTitle" placeholder="Название видео">
+            <input type="url" id="videoUrl" placeholder="Ссылка на видео">
+            <button onclick="addVideo()">Добавить</button>
+            <button onclick="closeModal()">Отмена</button>
+        </div>
+    </div>
 
     <script>
-        // Точные данные со второго скриншота
-        const videos = [
-            {
-                title: "Аudi",
-                channel: "Ivan Ozilov",
-                stats: "19 пиктограмм"
-            }
-        ];
+        let videos = JSON.parse(localStorage.getItem('fiohub_videos') || '[]');
         
-        const grid = document.getElementById('videoGrid');
-        grid.innerHTML = videos.map(video => `
-            <div class="video-card">
-                <div class="thumbnail">🎬</div>
-                <div class="video-info">
-                    <div class="video-title">${video.title}</div>
-                    <div class="video-channel">${video.channel}</div>
-                    <div class="video-stats">${video.stats}</div>
+        if (videos.length === 0) {
+            videos = [
+                {
+                    id: "1",
+                    title: "Аudi",
+                    channel: "Ivan Ozilov",
+                    stats: "19 пиктограмм",
+                    url: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"
+                }
+            ];
+            localStorage.setItem('fiohub_videos', JSON.stringify(videos));
+        }
+        
+        function saveVideos() {
+            localStorage.setItem('fiohub_videos', JSON.stringify(videos));
+        }
+        
+        function displayVideos() {
+            const grid = document.getElementById('videoGrid');
+            if (videos.length === 0) {
+                grid.innerHTML = '<div style="text-align:center;padding:50px">📭 Нет видео</div>';
+                return;
+            }
+            
+            grid.innerHTML = videos.map(video => `
+                <div class="video-card" onclick="watchVideo('${video.id}')">
+                    <div class="thumbnail">🎬</div>
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-channel">${video.channel}</div>
+                        <div class="video-stats">${video.stats || video.views + ' просмотров'}</div>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
+        }
+        
+        function watchVideo(id) {
+            const video = videos.find(v => v.id === id);
+            if (video) {
+                alert('🎬 Просмотр видео: ' + video.title + '\n📹 Ссылка: ' + video.url);
+            }
+        }
+        
+        function openModal() {
+            document.getElementById('modal').classList.add('open');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('open');
+            document.getElementById('videoTitle').value = '';
+            document.getElementById('videoUrl').value = '';
+        }
+        
+        function addVideo() {
+            const title = document.getElementById('videoTitle').value.trim();
+            const url = document.getElementById('videoUrl').value.trim();
+            
+            if (!title || !url) {
+                alert('Пожалуйста, заполните все поля');
+                return;
+            }
+            
+            const newVideo = {
+                id: Date.now().toString(),
+                title: title,
+                channel: "Ivan Ozilov",
+                stats: "0 просмотров",
+                url: url
+            };
+            
+            videos.push(newVideo);
+            saveVideos();
+            closeModal();
+            displayVideos();
+            alert('✅ Видео добавлено!');
+        }
+        
+        displayVideos();
     </script>
 </body>
 </html>
