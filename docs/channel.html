@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Let's FioHub - Мой канал</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+        }
+        .header {
+            background: #202020;
+            padding: 16px 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff0000;
+            cursor: pointer;
+        }
+        .sidebar {
+            width: 240px;
+            background: #1a1a1a;
+            position: fixed;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            padding: 20px 0;
+        }
+        .sidebar ul {
+            list-style: none;
+        }
+        .sidebar li {
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .sidebar li:hover {
+            background: #2a2a2a;
+        }
+        .main {
+            margin-left: 240px;
+            margin-top: 60px;
+            padding: 24px;
+        }
+        .channel-header {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .channel-name {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .channel-stats {
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #3ea6ff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #fff;
+        }
+        .delete-btn {
+            background: #ff4444;
+        }
+        .video-item {
+            background: #1a1a1a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .empty {
+            text-align: center;
+            padding: 50px;
+            color: #aaa;
+        }
+        h2 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo" onclick="location.href='index.html'">🎬 Let's FioHub</div>
+    </div>
+    <div class="sidebar">
+        <ul>
+            <li onclick="location.href='index.html'">🏠 Главная</li>
+            <li onclick="location.href='channel.html'">📺 Мой канал</li>
+            <li>🔔 Подписки</li>
+            <li>📜 История</li>
+            <li>👥 Мои подписчики</li>
+        </ul>
+    </div>
+    <div class="main">
+        <div class="channel-header">
+            <div class="channel-name">👤 Kwin Makalister's Channel</div>
+            <div class="channel-stats">Нет описания • 0 подписчиков</div>
+            <button onclick="editChannel()">✏️ Редактировать канал</button>
+        </div>
+        <h2>📹 Мои видео</h2>
+        <div id="videosContainer"></div>
+    </div>
+
+    <script>
+        let videos = JSON.parse(localStorage.getItem('fiohub_videos') || '[]');
+        
+        function displayVideos() {
+            const container = document.getElementById('videosContainer');
+            const myVideos = videos.filter(v => v.channel === "Kwin Makalister");
+            
+            if (myVideos.length === 0) {
+                container.innerHTML = '<div class="empty">📭 Нет видео на канале</div>';
+                return;
+            }
+            
+            container.innerHTML = myVideos.map(video => `
+                <div class="video-item">
+                    <div>
+                        <strong>${escapeHtml(video.title)}</strong><br>
+                        <small>${video.views.toLocaleString()} просмотров</small>
+                    </div>
+                    <button class="delete-btn" onclick="deleteVideo('${video.id}')">🗑 Удалить</button>
+                </div>
+            `).join('');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function deleteVideo(id) {
+            if (confirm('Удалить это видео?')) {
+                videos = videos.filter(v => v.id !== id);
+                localStorage.setItem('fiohub_videos', JSON.stringify(videos));
+                displayVideos();
+            }
+        }
+        
+        function editChannel() {
+            const newName = prompt('Новое название канала:', 'Kwin Makalister\'s Channel');
+            if (newName && newName !== "Kwin Makalister's Channel") {
+                videos = videos.map(v => {
+                    if (v.channel === "Kwin Makalister") {
+                        v.channel = newName;
+                    }
+                    return v;
+                });
+                localStorage.setItem('fiohub_videos', JSON.stringify(videos));
+                document.querySelector('.channel-name').innerHTML = `👤 ${newName}`;
+                displayVideos();
+                alert('Название канала обновлено!');
+            }
+        }
+        
+        displayVideos();
+    </script>
+</body>
+</html>

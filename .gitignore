@@ -1,0 +1,19 @@
+
+# Backend временные файлы
+backend/.dockerignore
+
+# Frontend node_modules
+frontend/node_modules/
+frontend/build/
+frontend/package-lock.json
+frontend/package.json
+frontend/src/
+
+# Временные файлы
+*.pyc
+__pycache__/
+*.backup
+*.new
+videos.json
+youtube_player.html
+create_video.sh

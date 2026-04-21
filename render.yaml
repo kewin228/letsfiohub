@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: letsfiohub-api
+    runtime: image
+    repo: https://github.com/kewin228/letsfiohub
+    branch: main
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PORT
+        value: 8000
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: SECRET_KEY
+        value: letsfiohub-secret-key-2024
