@@ -1,27 +1,473 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Просмотр</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Let's FioHub — просмотр видео</title>
     <style>
-        body { font-family: Arial; background: #0f0f0f; color: white; margin: 0; padding: 20px; }
-        video { width: 100%; max-width: 800px; }
-        button { background: #3ea6ff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 10px 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #f1f1f1; }
+        .header {
+            position: fixed; top: 0; left: 0; right: 0; height: 56px;
+            background: #0f0f0f; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 16px; z-index: 100;
+            border-bottom: 1px solid #303030;
+        }
+        .logo { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .logo img { height: 32px; }
+        .back-link { margin-left: 24px; color: #aaa; text-decoration: none; }
+        .container { max-width: 1200px; margin: 80px auto 0; padding: 0 24px; }
+        .video-wrapper { background: #000; border-radius: 16px; overflow: hidden; position: relative; }
+        .video-wrapper video { width: 100%; max-height: 70vh; }
+        .video-info-card { background: #1a1a1a; border-radius: 16px; padding: 20px; margin-top: 16px; }
+        .video-title { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+        .stats-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid #303030; }
+        .action-buttons { display: flex; gap: 12px; align-items: center; }
+        .action-btn {
+            background: #272727;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .action-btn:hover { background: #3f3f3f; }
+        .action-btn.liked { background: #ff0000; }
+        .action-btn.disliked { background: #3f3f3f; color: #ff0000; }
+        .channel-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #303030; }
+        .channel-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .channel-avatar { width: 48px; height: 48px; background: linear-gradient(135deg, #ff0000, #cc0000); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .channel-name { font-weight: 600; font-size: 16px; }
+        .channel-subscribers { font-size: 12px; color: #aaa; }
+        .subscribe-btn {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .subscribe-btn.subscribed { background: #272727; }
+        .description { padding: 16px 0; font-size: 14px; color: #ccc; }
+        .comments-section { margin-top: 24px; }
+        .comment-form { display: flex; gap: 12px; margin-bottom: 24px; }
+        .comment-form textarea { flex: 1; background: #121212; border: 1px solid #303030; border-radius: 20px; padding: 12px; color: white; font-family: inherit; resize: vertical; }
+        .comment-form button { background: #ff0000; border: none; padding: 0 24px; border-radius: 40px; cursor: pointer; color: white; }
+        .comment { background: #1a1a1a; padding: 16px; border-radius: 16px; margin-bottom: 12px; }
+        .comment-author { font-weight: bold; margin-bottom: 8px; color: #ff0000; }
+        .comment-text { margin-bottom: 8px; }
+        .comment-meta { font-size: 12px; color: #aaa; display: flex; gap: 16px; margin-top: 8px; }
+        .comment-like { cursor: pointer; }
+        .comment-like:hover { color: #ff0000; }
+        .loading { text-align: center; padding: 60px; color: #aaa; }
+        
+        /* Кнопка субтитров */
+        .subtitles-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 20px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 8px;
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .subtitles-menu button {
+            background: none;
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .subtitles-menu button:hover { background: #3f3f3f; }
+        .subtitles-btn {
+            background: #272727;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @media (max-width: 768px) { .container { padding: 0 16px; } }
     </style>
 </head>
 <body>
-    <button onclick="location.href='index.html'">← Назад</button>
-    <div id="player"></div>
-    <script>
-        const v = JSON.parse(localStorage.getItem('current'));
-        if(v) {
-            document.getElementById('player').innerHTML = `
-                <h1>${v.title}</h1>
-                <video controls autoplay src="${v.url}"></video>
-                <p>👁️ ${v.views} просмотров</p>
-            `;
-        } else {
-            document.getElementById('player').innerHTML = '<p>Видео не найдено</p>';
+
+<header class="header">
+    <div style="display: flex; align-items: center;">
+        <div class="logo" onclick="window.location.href='/letsfiohub'">
+            <img src="logo.png" alt="Logo">
+            <span>Let's FioHub</span>
+        </div>
+        <a href="/letsfiohub" class="back-link">← На главную</a>
+    </div>
+</header>
+
+<main class="container" id="app">
+    <div class="loading">⏳ Загрузка видео...</div>
+</main>
+
+<script>
+    const API_URL = 'https://letsfiohub-api.onrender.com';
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get('id');
+    let token = localStorage.getItem('token');
+    let currentUser = null;
+    let currentVideo = null;
+    let comments = [];
+    let hasLiked = false;
+    let hasDisliked = false;
+    let isSubscribed = false;
+    let likeCount = 0;
+    let dislikeCount = 0;
+    let subscriberCount = 0;
+    let subtitlesEnabled = localStorage.getItem('subtitlesEnabled') === 'true';
+
+    async function loadCurrentUser() {
+        if (!token) return;
+        try {
+            const res = await fetch(`${API_URL}/api/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) currentUser = await res.json();
+            else token = null;
+        } catch(e) {}
+    }
+
+    async function loadVideo() {
+        if (!videoId) {
+            document.getElementById('app').innerHTML = '<div class="loading">❌ Видео не найдено</div>';
+            return;
         }
-    </script>
+        try {
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const response = await fetch(`${API_URL}/api/videos/${videoId}`, { headers });
+            if (response.ok) {
+                currentVideo = await response.json();
+                likeCount = currentVideo.likes || 0;
+                dislikeCount = currentVideo.dislikes || 0;
+                if (token) {
+                    await checkLiked();
+                    await checkSubscribed();
+                }
+                await loadComments();
+                renderPage();
+            } else {
+                document.getElementById('app').innerHTML = '<div class="loading">❌ Видео не найдено</div>';
+            }
+        } catch (err) {
+            document.getElementById('app').innerHTML = '<div class="loading">❌ Ошибка загрузки</div>';
+        }
+    }
+
+    async function checkLiked() {
+        try {
+            const res = await fetch(`${API_URL}/api/videos/${videoId}/has_liked`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                hasLiked = data.liked;
+                hasDisliked = data.disliked;
+            }
+        } catch(e) {}
+    }
+
+    async function checkSubscribed() {
+        if (!currentVideo) return;
+        try {
+            const res = await fetch(`${API_URL}/api/is_subscribed/${currentVideo.uploader_id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                isSubscribed = data.subscribed;
+            }
+            const subRes = await fetch(`${API_URL}/api/subscribers/${currentVideo.uploader_id}`);
+            if (subRes.ok) {
+                const subData = await subRes.json();
+                subscriberCount = subData.count;
+            }
+        } catch(e) {}
+    }
+
+    async function likeVideo() {
+        if (!token) { alert('Войдите, чтобы поставить лайк'); return; }
+        if (hasLiked) { alert('Вы уже поставили лайк'); return; }
+        try {
+            const res = await fetch(`${API_URL}/api/videos/${videoId}/like`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                hasLiked = true;
+                hasDisliked = false;
+                likeCount = data.likes;
+                dislikeCount = data.dislikes;
+                updateButtons();
+            }
+        } catch(err) { alert('Ошибка'); }
+    }
+
+    async function dislikeVideo() {
+        if (!token) { alert('Войдите, чтобы поставить дизлайк'); return; }
+        if (hasDisliked) { alert('Вы уже поставили дизлайк'); return; }
+        try {
+            const res = await fetch(`${API_URL}/api/videos/${videoId}/dislike`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                hasDisliked = true;
+                hasLiked = false;
+                likeCount = data.likes;
+                dislikeCount = data.dislikes;
+                updateButtons();
+            }
+        } catch(err) { alert('Ошибка'); }
+    }
+
+    async function subscribe() {
+        if (!token) { alert('Войдите, чтобы подписаться'); return; }
+        try {
+            const method = isSubscribed ? 'DELETE' : 'POST';
+            const res = await fetch(`${API_URL}/api/subscribe/${currentVideo.uploader_id}`, {
+                method: method,
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                isSubscribed = !isSubscribed;
+                subscriberCount = data.subscribers_count;
+                updateSubscribeButton();
+            }
+        } catch(err) { alert('Ошибка'); }
+    }
+
+    function goToChannel() {
+        if (currentVideo && currentVideo.uploader_name) {
+            window.location.href = `/letsfiohub/channel.html?username=${currentVideo.uploader_name}`;
+        }
+    }
+
+    async function loadComments() {
+        try {
+            const res = await fetch(`${API_URL}/api/videos/${videoId}/comments`);
+            if (res.ok) comments = await res.json();
+        } catch(e) { comments = []; }
+    }
+
+    async function addComment() {
+        const text = document.getElementById('commentText')?.value;
+        if (!text || !text.trim()) return;
+        if (!token) { alert('Войдите, чтобы оставить комментарий'); return; }
+        try {
+            const res = await fetch(`${API_URL}/api/videos/${videoId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ text })
+            });
+            if (res.ok) {
+                document.getElementById('commentText').value = '';
+                await loadComments();
+                renderComments();
+            }
+        } catch(err) { alert('Ошибка'); }
+    }
+
+    async function likeComment(commentId) {
+        if (!token) { alert('Войдите'); return; }
+        try {
+            await fetch(`${API_URL}/api/comments/${commentId}/like`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            await loadComments();
+            renderComments();
+        } catch(err) {}
+    }
+
+    function shareVideo() {
+        navigator.clipboard.writeText(window.location.href);
+        alert('Ссылка скопирована!');
+    }
+
+    function toggleSubtitles() {
+        const video = document.getElementById('videoPlayer');
+        if (!video) return;
+        
+        subtitlesEnabled = !subtitlesEnabled;
+        localStorage.setItem('subtitlesEnabled', subtitlesEnabled);
+        
+        // Ищем трек субтитров
+        let track = null;
+        for (let i = 0; i < video.textTracks.length; i++) {
+            if (video.textTracks[i].kind === 'subtitles') {
+                track = video.textTracks[i];
+                break;
+            }
+        }
+        
+        if (track) {
+            track.mode = subtitlesEnabled ? 'showing' : 'disabled';
+        }
+        
+        const subBtn = document.getElementById('subtitlesBtn');
+        if (subBtn) {
+            subBtn.style.opacity = subtitlesEnabled ? '1' : '0.5';
+            subBtn.style.background = subtitlesEnabled ? '#ff0000' : '#272727';
+        }
+    }
+
+    function formatViews(views) {
+        if (views >= 1000000) return (views/1000000).toFixed(1) + 'M';
+        if (views >= 1000) return (views/1000).toFixed(1) + 'K';
+        return views;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function updateButtons() {
+        const likeBtn = document.getElementById('likeBtn');
+        const dislikeBtn = document.getElementById('dislikeBtn');
+        document.getElementById('likeCount').textContent = likeCount;
+        document.getElementById('dislikeCount').textContent = dislikeCount;
+        if (hasLiked) likeBtn.classList.add('liked');
+        else likeBtn.classList.remove('liked');
+        if (hasDisliked) dislikeBtn.classList.add('disliked');
+        else dislikeBtn.classList.remove('disliked');
+    }
+
+    function updateSubscribeButton() {
+        const subBtn = document.getElementById('subscribeBtn');
+        const subsSpan = document.getElementById('channelSubs');
+        subBtn.textContent = isSubscribed ? '✓ Вы подписаны' : '🔔 Подписаться';
+        if (isSubscribed) subBtn.classList.add('subscribed');
+        else subBtn.classList.remove('subscribed');
+        subsSpan.textContent = `${subscriberCount} подписчиков`;
+    }
+
+    function renderComments() {
+        const commentsList = document.getElementById('commentsList');
+        const commentsCount = document.getElementById('commentsCount');
+        if (commentsCount) commentsCount.textContent = comments.length;
+        if (commentsList) {
+            commentsList.innerHTML = comments.map(c => `
+                <div class="comment">
+                    <div class="comment-author">${escapeHtml(c.author_name)}</div>
+                    <div class="comment-text">${escapeHtml(c.text)}</div>
+                    <div class="comment-meta">
+                        <span>📅 ${new Date(c.created_at).toLocaleDateString()}</span>
+                        <span class="comment-like" onclick="likeComment(${c.id})">❤️ ${c.likes || 0}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    function renderPage() {
+        if (!currentVideo) return;
+        
+        const isOwnChannel = currentUser && currentUser.id === currentVideo.uploader_id;
+        
+        document.getElementById('app').innerHTML = `
+            <div class="video-wrapper">
+                <video id="videoPlayer" controls autoplay>
+                    <source src="${API_URL}/api/videos/${videoId}/stream" type="video/mp4">
+                    <track kind="subtitles" src="${API_URL}/api/videos/${videoId}/subtitles" srclang="ru" label="Русские" default>
+                    Ваш браузер не поддерживает видео
+                </video>
+                <button class="subtitles-btn" id="subtitlesBtn" style="position: absolute; bottom: 20px; right: 20px; opacity: ${subtitlesEnabled ? '1' : '0.5'}; background: ${subtitlesEnabled ? '#ff0000' : '#272727'};">📝 Субтитры</button>
+            </div>
+            <div class="video-info-card">
+                <h1 class="video-title">${escapeHtml(currentVideo.title) || 'Без названия'}</h1>
+                <div class="stats-row">
+                    <span id="viewsCount">👁️ ${formatViews(currentVideo.views)} просмотров</span>
+                    <div class="action-buttons">
+                        <button class="action-btn" id="likeBtn">👍 <span id="likeCount">${likeCount}</span></button>
+                        <button class="action-btn" id="dislikeBtn">👎 <span id="dislikeCount">${dislikeCount}</span></button>
+                        <button class="action-btn" id="shareBtn">🔗 Поделиться</button>
+                    </div>
+                </div>
+                <div class="channel-row">
+                    <div class="channel-info" id="channelLink">
+                        <div class="channel-avatar">📺</div>
+                        <div>
+                            <div class="channel-name">${escapeHtml(currentVideo.uploader_name)}</div>
+                            <div class="channel-subscribers" id="channelSubs">${subscriberCount} подписчиков</div>
+                        </div>
+                    </div>
+                    ${!isOwnChannel ? `<button class="subscribe-btn ${isSubscribed ? 'subscribed' : ''}" id="subscribeBtn">${isSubscribed ? '✓ Вы подписаны' : '🔔 Подписаться'}</button>` : ''}
+                </div>
+                <div class="description">${escapeHtml(currentVideo.description) || 'Нет описания'}</div>
+            </div>
+            <div class="comments-section">
+                <h3 style="margin-bottom: 16px;">💬 Комментарии <span id="commentsCount">${comments.length}</span></h3>
+                ${token ? `
+                    <div class="comment-form">
+                        <textarea id="commentText" placeholder="Напишите комментарий..." rows="2"></textarea>
+                        <button id="submitCommentBtn">Отправить</button>
+                    </div>
+                ` : '<p style="margin: 16px 0;"><a href="#" onclick="alert(\'Войдите, чтобы оставить комментарий\'); return false;">Войдите</a>, чтобы оставить комментарий</p>'}
+                <div id="commentsList"></div>
+            </div>
+        `;
+        
+        // Привязываем обработчики
+        document.getElementById('likeBtn').onclick = likeVideo;
+        document.getElementById('dislikeBtn').onclick = dislikeVideo;
+        document.getElementById('shareBtn').onclick = shareVideo;
+        if (!isOwnChannel) document.getElementById('subscribeBtn').onclick = subscribe;
+        document.getElementById('channelLink').onclick = goToChannel;
+        if (token) document.getElementById('submitCommentBtn').onclick = addComment;
+        
+        // Субтитры
+        const subBtn = document.getElementById('subtitlesBtn');
+        if (subBtn) subBtn.onclick = toggleSubtitles;
+        
+        renderComments();
+        
+        // Применяем сохранённое состояние субтитров
+        const video = document.getElementById('videoPlayer');
+        if (video) {
+            video.addEventListener('loadedmetadata', () => {
+                for (let i = 0; i < video.textTracks.length; i++) {
+                    if (video.textTracks[i].kind === 'subtitles') {
+                        video.textTracks[i].mode = subtitlesEnabled ? 'showing' : 'disabled';
+                        break;
+                    }
+                }
+            });
+        }
+    }
+
+    async function init() {
+        await loadCurrentUser();
+        await loadVideo();
+    }
+    
+    init();
+</script>
 </body>
 </html>
